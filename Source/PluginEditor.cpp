@@ -734,9 +734,9 @@ void AvelTimeEditor::savePresetDialog()
     alert->addTextEditor ("name", proc.presets.currentName == "Default" ? "My Preset" : proc.presets.currentName);
     alert->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
     alert->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
-    alert->enterModalState (true, juce::ModalCallbackFunction::create ([this] (int r)
+    alert->enterModalState (true, juce::ModalCallbackFunction::create ([this, sp = juce::Component::SafePointer<AvelTimeEditor> (this)] (int r)
     {
         if (r == 1 && alert != nullptr) proc.presets.saveUser (alert->getTextEditorContents ("name"));
-        juce::MessageManager::callAsync ([sp = juce::Component::SafePointer<AvelTimeEditor> (this)] { if (sp) sp->alert.reset(); });
+        juce::MessageManager::callAsync ([sp] { if (sp) sp->alert.reset(); });
     }), false);
 }

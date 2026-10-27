@@ -439,7 +439,7 @@ namespace avel::ui
             editor->selectAll();
             editor->setBounds (valueR.toNearestInt().expanded (4, 2));
             editor->onReturnKey = [this] { commitEditor(); };
-            editor->onEscapeKey = [this] { juce::MessageManager::callAsync ([sp = juce::Component::SafePointer<Dial> (this)] { if (sp) sp->editor.reset(); }); };
+            editor->onEscapeKey = [sp = juce::Component::SafePointer<Dial> (this)] { juce::MessageManager::callAsync ([sp] { if (sp) sp->editor.reset(); }); };
             editor->onFocusLost = [this] { commitEditor(); };
             addAndMakeVisible (*editor);
             editor->grabKeyboardFocus();
