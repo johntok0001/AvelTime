@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: bash build_mac.sh
+      - name: Validate (auval)
+        run: auval -v aufx AvTm Avel
+      - name: Installer
+        run: bash make_installer_mac.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AvelTime-macOS
+          path: dist/*.pkg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S . -B build
+          cmake --build build --config Release --target AvelTime_VST3
+      - name: Installer
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+          $v = (Select-String -Path CMakeLists.txt -Pattern 'project\(AvelTime VERSION ([0-9.]+)').Matches[0].Groups[1].Value
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$v" packaging\windows\AvelTime.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AvelTime-Windows
+          path: dist/*.exe
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ macos, windows ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
