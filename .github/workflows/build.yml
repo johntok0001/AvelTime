@@ -27,9 +27,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
+        shell: bash
         run: |
-          cmake -S . -B build
-          cmake --build build --config Release --target AvelTime_VST3
+          set -o pipefail
+          cmake -S . -B build 2>&1 | tee build.log
+          cmake --build build --config Release --target AvelTime_VST3 -- -m 2>&1 | tee -a build.log || {
+            grep -iE "error|fatal" build.log | grep -v "warning" | sort -u | head -40 | while IFS= read -r l; do echo "::error::${l:0:900}"; done
+            exit 1; }
       - name: Installer
         run: |
           if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
